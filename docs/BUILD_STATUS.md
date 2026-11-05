@@ -1,7 +1,7 @@
 # Build status
 
 **Branch:** `feat/agrishift-mvp`  
-**Status:** Local MVP implemented and verified; scientific review and deployment remain open.  
+**Status:** MVP implemented on a draft PR; local and GitHub CI checks passed. Scientific review and deployment remain open.  
 **Date:** 2026-11-05 (Malaysia)
 
 This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed scenario is an exploratory screen, not a validated recommendation.
@@ -21,7 +21,7 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 | 9. Testing | Complete for current scope | Backend tests cover aggregation, missing values, unit mismatch, failed NASA requests, cache isolation, range constraints, scoring, and weight normalization. Frontend tests cover setup validation, loading, API errors, and basic navigation. See final verification below. |
 | 10. Deployment readiness | Prepared, not deployed | Render blueprint, Vercel rewrite, CORS and API URL instructions. Production origin, cloud service, and private preview need authorized setup and verification. |
 | 11. Documentation | Complete for MVP | README, architecture, methodology, data sources, limitations, coding rules, and this status file. Initial preparation documents retained. |
-| 12. Quality review | Complete locally | Local build, tests, lint, formatting, live API, browser workflow, working-tree review, and secret check performed. CI on GitHub and production remain unverified until branch publication. |
+| 12. Quality review | Complete for MVP | Local build, tests, lint, formatting, live API, browser workflow, working-tree review, and secret scan performed. Push and PR GitHub Actions runs passed. Production remains unverified. |
 
 ## Verification
 
@@ -31,12 +31,13 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 - Local HTTP smoke test: `GET /api/health`, `GET /api/crops`, `GET /api/climate`, and `POST /api/rotations/evaluate` returned 200. UI traversal reached results and displayed source/limitation details.
 - `npm audit --omit=dev` reported zero production dependency advisories. Full `npm audit` reported 10 moderate advisories in development-only ESLint/transitive packages; do not force incompatible upgrades without review.
 - Production frontend build emits a non-fatal warning for an approximately 851 kB JavaScript chunk. Route-level splitting is a later performance improvement.
+- Draft [PR #15](https://github.com/Shafiqfaizzuddin/Agrishift-Ai/pull/15) was opened from this feature branch. Both the [push CI](https://github.com/Shafiqfaizzuddin/Agrishift-Ai/actions/runs/42049871780) and [PR CI](https://github.com/Shafiqfaizzuddin/Agrishift-Ai/actions/runs/42049944974) runs completed successfully for implementation commit `809fae5`.
 
 ## Open scientific and operational work
 
 1. Ask a local agronomist or extension officer to review crop variety choice, planting seasons, drainage, waterlogging, pest/disease rotations, and the meaning of the family-diversity heuristic for Kedah.
 2. Validate actual farm soil pH, texture, irrigation, and history before interpreting any scenario. Soil texture and irrigation currently have no numeric effect.
 3. Confirm FAO Ecocrop reuse terms and capture dated source snapshots before public presentation. Species ranges alone do not establish local feasibility.
-4. Run GitHub Actions on the draft PR and verify Vercel/Render settings in an authorized private preview. No deployment or merge has occurred.
+4. Verify Vercel/Render settings in an authorized private preview. No deployment or merge has occurred.
 
 Optional imagery, PDF export, localization, and AI explanations were not implemented.
