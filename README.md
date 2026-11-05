@@ -7,12 +7,12 @@ An independent student decision-support prototype for the 2026 NASA Space Apps C
 - Five-screen responsive workflow: overview, farm setup, climate analysis, planner, and results.
 - Interactive OpenStreetMap location picker with manual coordinate entry.
 - NASA POWER daily point retrieval for historical temperature and precipitation, with unit checks, missing-value handling, retries, and in-memory cache.
-- Monthly rainfall and temperature charts, source period and completeness, and annual variability summary from actual retrieved data.
+- Monthly rainfall and temperature charts, source period, completeness, and missing-month warnings from actual retrieved data. The API also returns annual rainfall variability.
 - A three-crop sourced catalog: maize, mung bean, and sweet potato. The Kedah, Malaysia preset is explicitly hypothetical.
 - Current-crop-anchored two-crop comparisons with criterion flags, transparent screening index when evidence permits, and explicit insufficient-evidence states.
 - Backend Pytest tests, frontend Vitest tests, ESLint, TypeScript production build, and GitHub Actions CI.
 
-The screening index is **not a probability**. It does not forecast yield, revenue, water savings, or next-season weather. Most default Kedah comparisons withhold an overall score because historical annual rainfall falls outside some published broad species ranges. See [methodology](docs/methodology.md) and [limitations](docs/limitations.md).
+The screening index is **not a probability**. It does not forecast yield, revenue, water savings, or next-season weather. It uses climate and pH ranges only; positive water or rotation weights withhold ranking because numeric models are unavailable. Default Kedah comparisons also withhold an overall score because historical annual rainfall falls outside some published broad species ranges. FAO Ecocrop is an older, broad species database, and local scientific review is required. See [methodology](docs/methodology.md) and [limitations](docs/limitations.md).
 
 ## Structure
 
@@ -61,6 +61,7 @@ Set-Location backend
 & .venv/Scripts/python.exe -m pytest -q
 Set-Location ../frontend
 npm run lint
+npm run format:check
 npm test
 npm run build
 ```
@@ -69,10 +70,10 @@ Tests use synthetic fixtures and never present them as NASA observations. A live
 
 ## Deployment preparation
 
-No public deployment has been made. For Render, point a new web service at the repository's `render.yaml`, set the production `AGRISHIFT_CORS_ORIGINS` to the exact Vercel origin, and confirm `/api/health`. For Vercel, set project root to `frontend`, use its `vercel.json`, and set `VITE_API_BASE_URL` to the HTTPS Render API URL. Build and API credentials are not embedded in source. Test CORS and all five routes in a private preview before any authorized public deployment.
+No public deployment has been made. For Render, point a new web service at the repository's `render.yaml` (the backend `.python-version` selects Python 3.14), set the production `AGRISHIFT_CORS_ORIGINS` to the exact Vercel origin, and confirm `/api/health`. For Vercel, set project root to `frontend`, use its `vercel.json`, and set `VITE_API_BASE_URL` to the HTTPS Render API URL. Build and API credentials are not embedded in source. Test CORS, traffic controls, and all five routes in a private preview before any authorized public deployment.
 
 ## Evidence, attribution, and status
 
-See [architecture](docs/architecture.md), [data sources and third-party attribution](docs/data_sources.md), [scientific methodology](docs/methodology.md), [limitations](docs/limitations.md), and the current [build status](docs/BUILD_STATUS.md). The initial [requirements](docs/01-requirements-and-mvp.md), [planning architecture](docs/02-architecture-data-and-science.md), and [GitHub backlog](docs/03-issues-and-build-sequence.md) remain as preparation records. The source repository's [MIT license](LICENSE) covers project code; third-party data and libraries retain their own terms. This project is not affiliated with or endorsed by NASA.
+See [architecture](docs/architecture.md), [data sources and third-party attribution](docs/data_sources.md), [scientific methodology](docs/methodology.md), [limitations](docs/limitations.md), the [independent audit](docs/05-audit-report-2026-11-06.md), and the current [build status](docs/BUILD_STATUS.md). The initial [requirements](docs/01-requirements-and-mvp.md), [planning architecture](docs/02-architecture-data-and-science.md), and [GitHub backlog](docs/03-issues-and-build-sequence.md) remain as preparation records. The source repository's [MIT license](LICENSE) covers project code; third-party data and libraries retain their own terms. This project is not affiliated with or endorsed by NASA.
 
 For screenshots, capture the farm setup, climate source/coverage view, and a result showing the insufficient-evidence state. Label the hypothetical Kedah inputs and cite the actual NASA retrieval period in any submission materials.
