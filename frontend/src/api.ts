@@ -31,6 +31,15 @@ export type Climate = {
   retrieved_at: string;
   from_cache: boolean;
   stale_cache?: boolean;
+  monthly: {
+    year: number;
+    month: number;
+    coverage: number;
+    rainfall_mm: number | null;
+    temperature_mean_c: number | null;
+    temperature_max_c: number | null;
+    temperature_min_c: number | null;
+  }[];
   monthly_patterns: {
     month: number;
     years: number;
@@ -60,6 +69,7 @@ export type Scenario = {
   flags: Flag[];
   score: number | null;
   score_status: string;
+  evidence_gaps: string[];
   criterion_scores: Record<string, number | null>;
   trade_offs: string[];
 };

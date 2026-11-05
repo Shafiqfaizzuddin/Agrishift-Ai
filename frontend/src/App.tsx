@@ -6,7 +6,13 @@ import {
   Routes,
   useNavigate,
 } from "react-router-dom";
-import { MapContainer, Marker, TileLayer, useMapEvents } from "react-leaflet";
+import {
+  MapContainer,
+  Marker,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from "react-leaflet";
 import L from "leaflet";
 import { ArrowRight, ChartNoAxesCombined, MapPin, Sprout } from "lucide-react";
 import {
@@ -66,6 +72,21 @@ function MapClick({ onPick }: { onPick: (lat: number, lon: number) => void }) {
     click: (e) =>
       onPick(Number(e.latlng.lat.toFixed(4)), Number(e.latlng.lng.toFixed(4))),
   });
+  return null;
+}
+function MapView({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    if (Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180) {
+      map.setView([latitude, longitude], map.getZoom());
+    }
+  }, [latitude, longitude, map]);
   return null;
 }
 function Header() {
@@ -192,6 +213,12 @@ function FarmPage({
       setError("Check the coordinates and farm area.");
       return;
     }
+    if (!catalog) {
+      setError(
+        "The crop catalog is unavailable. Retry loading it before continuing.",
+      );
+      return;
+    }
     setError("");
     navigate("/climate");
   }
@@ -215,6 +242,7 @@ function FarmPage({
               url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             <Marker position={[farm.latitude, farm.longitude]} icon={icon} />
+            <MapView latitude={farm.latitude} longitude={farm.longitude} />
             <MapClick
               onPick={(latitude, longitude) => patch({ latitude, longitude })}
             />
@@ -391,6 +419,8 @@ function ClimatePage({
       ...x,
       name: months[x.month - 1],
     })) || [];
+  const incompleteMonths =
+    climate?.monthly.filter((month) => month.rainfall_mm === null).length ?? 0;
   return (
     <>
       <Head
@@ -435,6 +465,12 @@ function ClimatePage({
               <span className="small muted">
                 {climate.usable_years} complete years
               </span>
+              {climate.annual_rainfall_range_mm && (
+                <span className="small muted">
+                  Annual range {climate.annual_rainfall_range_mm[0]}–
+                  {climate.annual_rainfall_range_mm[1]} mm
+                </span>
+              )}
             </div>
             <div className="stat">
               <span className="muted small">Mean annual temperature</span>
@@ -493,9 +529,14 @@ function ClimatePage({
           </div>
           <div className="note">
             <strong>Source:</strong> {climate.source},{" "}
-            {climate.parameters.join(", ")}. Retrieved{" "}
+            {climate.parameters.join(", ")} (temperature {climate.units.T2M},
+            rainfall {climate.units.PRECTOTCORR}). Retrieved{" "}
             {new Date(climate.retrieved_at).toLocaleDateString()}.{" "}
-            {climate.from_cache ? "Dated cache." : "Live retrieval."}{" "}
+            {climate.stale_cache
+              ? "Stale cached response after a NASA request failed."
+              : climate.from_cache
+                ? "Dated cache."
+                : "Live retrieval."}{" "}
             <a
               className="source"
               href={climate.source_url}
@@ -505,6 +546,12 @@ function ClimatePage({
               NASA API ↗
             </a>
           </div>
+          {incompleteMonths > 0 && (
+            <p className="note warn" role="status">
+              {incompleteMonths} monthly totals withheld because one or more
+              daily values are missing. Gaps are not estimated.
+            </p>
+          )}
           <div className="actions">
             <Link className="button alt" to="/farm">
               Edit farm
@@ -589,8 +636,8 @@ function PlannerPage({
           <h2>Priorities</h2>
           <p className="small muted">
             Weights are normalized. Water effects and soil-health benefits
-            cannot be quantified. A positive water weight withholds ranking;
-            soil weight uses pH only.
+            cannot be quantified. A positive water or rotation weight withholds
+            ranking; soil weight uses pH only.
           </p>
           {(["climate", "water", "soil", "rotation"] as const).map((k) => (
             <label className="field" key={k} style={{ marginBottom: 12 }}>
@@ -694,6 +741,12 @@ function ResultsPage({
         </div>
       </div>
       <p className="note warn">{result.method_note}</p>
+      {result.climate.stale_cache && (
+        <p className="note warn">
+          NASA retrieval failed; this comparison used a stale cached response
+          from {new Date(result.climate.retrieved_at).toLocaleDateString()}.
+        </p>
+      )}
       <div className="results">
         {result.scenarios.map((s, i) => (
           <article className="result" key={s.crop_ids.join("-")}>
@@ -705,7 +758,9 @@ function ResultsPage({
               ) : (
                 <>
                   <span className="score">{s.score}/100</span>{" "}
-                  <span className="small muted">screening index only</span>
+                  <span className="small muted">
+                    climate/pH screening index only
+                  </span>
                 </>
               )}
             </p>
@@ -713,6 +768,13 @@ function ResultsPage({
               Climate match: {s.criterion_scores.climate ?? "unknown"} · pH
               match: {s.criterion_scores.soil_ph ?? "unknown"} · water: unknown
             </p>
+            {(s.evidence_gaps ?? []).length > 0 && (
+              <ul className="evidence-gaps">
+                {(s.evidence_gaps ?? []).map((gap) => (
+                  <li key={gap}>{gap}</li>
+                ))}
+              </ul>
+            )}
             {s.flags.map((f, j) => (
               <div className="flag" key={`${f.crop_id}-${f.criterion}-${j}`}>
                 <span>
@@ -743,8 +805,8 @@ function ResultsPage({
       </div>
       {result.scenarios.length === 0 && (
         <p className="error">
-          No scenarios meet the published absolute ranges. Review inputs and
-          consult local expertise.
+          No scenarios remain after the screening rules. Review the excluded
+          sequences and inputs, then consult local expertise.
         </p>
       )}
       {result.excluded.length > 0 && (
@@ -790,11 +852,7 @@ function Content() {
   const [farm, setFarm] = useState<Farm>(example);
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [climate, setClimate] = useState<Climate | null>(null);
-  const [selected, setSelected] = useState([
-    "maize",
-    "mung-bean",
-    "sweet-potato",
-  ]);
+  const [selected, setSelected] = useState(["mung-bean", "sweet-potato"]);
   const [priorities, setPriorities] = useState<Record<string, number>>({
     climate: 6,
     water: 0,
@@ -804,12 +862,17 @@ function Content() {
   const [result, setResult] = useState<Evaluation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [catalogError, setCatalogError] = useState("");
+  const [catalogRetry, setCatalogRetry] = useState(0);
   const navigate = useNavigate();
   useEffect(() => {
     getCatalog()
-      .then(setCatalog)
-      .catch((e) => setError(e.message));
-  }, []);
+      .then((data) => {
+        setCatalog(data);
+        setCatalogError("");
+      })
+      .catch((e) => setCatalogError(e.message));
+  }, [catalogRetry]);
   async function onEvaluate() {
     setError("");
     setLoading(true);
@@ -828,10 +891,20 @@ function Content() {
       <Header />
       {!catalog && (
         <p
-          className={error ? "error" : "loading"}
-          role={error ? "alert" : "status"}
+          className={catalogError ? "error" : "loading"}
+          role={catalogError ? "alert" : "status"}
         >
-          {error || "Loading crop catalog…"}
+          {catalogError || "Loading crop catalog…"}{" "}
+          {catalogError && (
+            <button
+              onClick={() => {
+                setCatalogError("");
+                setCatalogRetry((n) => n + 1);
+              }}
+            >
+              Retry
+            </button>
+          )}
         </p>
       )}
       <main>

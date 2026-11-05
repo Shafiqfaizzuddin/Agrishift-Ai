@@ -328,7 +328,19 @@ h2 {
     grid-template-columns: 1fr;
   }
   .nav {
-    display: none;
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+    gap: 12px;
+    padding-bottom: 6px;
+  }
+  .top {
+    height: auto;
+    min-height: 76px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding: 14px 0;
   }
   .visual {
     height: 300px;

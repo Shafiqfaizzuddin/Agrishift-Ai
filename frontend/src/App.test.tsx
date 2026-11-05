@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 
 vi.mock("react-leaflet", () => ({
@@ -9,6 +9,7 @@ vi.mock("react-leaflet", () => ({
   TileLayer: () => null,
   Marker: () => null,
   useMapEvents: () => null,
+  useMap: () => ({ setView: () => null, getZoom: () => 9 }),
 }));
 
 afterEach(() => {
@@ -76,4 +77,59 @@ it("shows a loading state while climate retrieval is pending", () => {
   );
   render(<App />);
   expect(screen.getByText(/retrieving nasa power data/i)).toBeInTheDocument();
+});
+
+it("offers a retry when the crop catalog request fails", async () => {
+  window.history.pushState({}, "", "/");
+  const fetchMock = vi
+    .fn()
+    .mockRejectedValueOnce(new Error("offline"))
+    .mockResolvedValue({
+      ok: true,
+      json: async () => ({ version: "test", note: "fixture", crops: [] }),
+    });
+  vi.stubGlobal("fetch", fetchMock);
+  render(<App />);
+  expect(await screen.findByRole("alert")).toHaveTextContent(
+    /cannot reach the api/i,
+  );
+  fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  await waitFor(() =>
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument(),
+  );
+});
+
+it("labels stale climate data and withheld monthly totals", async () => {
+  window.history.pushState({}, "", "/climate");
+  const fixture = {
+    source: "TEST FIXTURE, not NASA observations",
+    source_url: "https://power.larc.nasa.gov/api/temporal/daily/point",
+    parameters: ["T2M", "PRECTOTCORR"],
+    period: { start_year: 2020, end_year: 2020 },
+    units: { T2M: "C", PRECTOTCORR: "mm/day" },
+    retrieved_at: "2026-11-06T00:00:00Z",
+    from_cache: true,
+    stale_cache: true,
+    monthly: [{ year: 2020, month: 1, coverage: 0.97, rainfall_mm: null }],
+    monthly_patterns: [],
+    usable_years: 0,
+    annual_rainfall_median_mm: null,
+    temperature_mean_c: null,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: async () =>
+          url.includes("/api/climate")
+            ? fixture
+            : { version: "test", note: "fixture", crops: [] },
+      }),
+    ),
+  );
+  render(<App />);
+  expect(await screen.findByText(/stale cached response/i)).toBeInTheDocument();
+  expect(screen.getByText(/1 monthly totals withheld/i)).toBeInTheDocument();
 });
