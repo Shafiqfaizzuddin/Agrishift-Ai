@@ -1,6 +1,6 @@
 # GitHub Issues backlog and 48-hour build sequence
 
-This is an **issue drafting plan**. The repository is not yet a Git repository, so these are not live GitHub Issues. Create them in GitHub when the team has a remote. Each issue below has an owner lane, priority, estimate in focused person-hours, dependency, and testable done condition. Assign named teammates at kickoff.
+This is an **issue drafting plan**. The table is not itself a set of live GitHub Issues. Create the Issues in the linked GitHub repository when access is available. Each issue below has an owner lane, priority, estimate in focused person-hours, dependency, and testable done condition. Assign named teammates at kickoff.
 
 ## 1. Roles and working agreement
 
