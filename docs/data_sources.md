@@ -1,0 +1,10 @@
+# Data sources and licenses
+
+| Source | Use | Attribution and limits |
+|---|---|---|
+| [NASA POWER Daily API](https://power.larc.nasa.gov/docs/services/api/temporal/daily/) | Historical daily point meteorology | Data source shown in API and UI with dates, parameters, units, and time standard. POWER temperature and precipitation are NASA-provided gridded modeled/assimilated context, not on-farm measurements. See [NASA data FAQ](https://power.larc.nasa.gov/docs/faqs/data/). The 2024 Kedah sample request confirmed `T2M`, `T2M_MAX`, `T2M_MIN` in C and `PRECTOTCORR` in mm/day. |
+| [FAO Ecocrop](https://ecocrop.apps.fao.org/ecocrop/srv/en/home) | Published species-level ranges | Each catalog row links to its individual FAO data sheet. Rainfall ranges are annual. Local applicability and source reuse terms should be reviewed before publication. |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) standard tiles | Interactive location picker | Visible map attribution is required. Follow the [OSMF tile usage policy](https://operations.osmfoundation.org/policies/tiles/), including no bulk tile prefetch. Availability is best effort. |
+| Farmer-provided inputs | Area, soil, pH, irrigation, current crop, priorities | Ephemeral client state and API request only. The application does not persist or authenticate these inputs. Accuracy is not verified. |
+
+The software's root `LICENSE` is MIT. Third-party library licenses remain their authors' licenses in package metadata and lockfiles. NASA branding should not imply endorsement.

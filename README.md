@@ -1,14 +1,78 @@
-# AgriShift AI — preparation documents
+# AgriShift AI
 
-Planning package for the 2026 NASA Space Apps Challenge, **Field Shift: Adapting Farms with NASA Data**. This repository contains no application implementation.
+An independent student decision-support prototype for the 2026 NASA Space Apps Challenge, [Field Shift: Adapting Farms with NASA Data](https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/). It helps farmers and extension workers explore two-crop sequences using historical NASA POWER climate, farmer-provided field information, and published FAO Ecocrop species ranges. It does **not** issue validated agronomic recommendations.
 
-1. [Software requirements and 48-hour MVP](docs/01-requirements-and-mvp.md)
-2. [Data, architecture, API contracts, and scientific review](docs/02-architecture-data-and-science.md)
-3. [GitHub Issues backlog and build sequence](docs/03-issues-and-build-sequence.md)
-4. [Team contribution workflow](CONTRIBUTING.md)
+## What works
 
-The [live GitHub Issues](https://github.com/Shafiqfaizzuddin/Agrishift-Ai/issues) contain the 12 P0 MVP tasks and two P1 follow-ups from the backlog. Pick an Issue before starting event implementation.
+- Five-screen responsive workflow: overview, farm setup, climate analysis, planner, and results.
+- Interactive OpenStreetMap location picker with manual coordinate entry.
+- NASA POWER daily point retrieval for historical temperature and precipitation, with unit checks, missing-value handling, retries, and in-memory cache.
+- Monthly rainfall and temperature charts, source period and completeness, and annual variability summary from actual retrieved data.
+- A three-crop sourced catalog: maize, mung bean, and sweet potato. The Kedah, Malaysia preset is explicitly hypothetical.
+- Current-crop-anchored two-crop comparisons with criterion flags, transparent screening index when evidence permits, and explicit insufficient-evidence states.
+- Backend Pytest tests, frontend Vitest tests, ESLint, TypeScript production build, and GitHub Actions CI.
 
-**Status:** Proposed scope and contracts. The crop catalog, agronomic rules, and pilot location require review before the team presents any rotation comparison as agronomic guidance. Historical NASA POWER data is context, not a forecast or a field measurement.
+The screening index is **not a probability**. It does not forecast yield, revenue, water savings, or next-season weather. Most default Kedah comparisons withhold an overall score because historical annual rainfall falls outside some published broad species ranges. See [methodology](docs/methodology.md) and [limitations](docs/limitations.md).
 
-Primary references are linked in the documents. The [official challenge summary](https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/) calls for NASA Earth observations, local soil information, crop characteristics, and farmer priorities in a rotation exploration tool.
+## Structure
+
+```text
+frontend/       React, TypeScript, Vite, Tailwind, shadcn-style Button, React Router, Leaflet, Recharts
+backend/app/    FastAPI routes, NASA POWER adapter, Pandas aggregation, catalog, rotation screening
+backend/tests/  Pytest synthetic fixtures and unit checks
+docs/           Architecture, data sources, methodology, limitations, planning, build status
+.github/        CI and collaboration templates
+render.yaml     Render blueprint for API
+```
+
+## Local development
+
+Prerequisites: Node.js 26 LTS, npm, Python 3.12+ compatible with the listed dependencies, and internet access for NASA POWER and map tiles. On the inspected Windows machine, `python` resolves to a broken WindowsApps alias; use `C:\Users\Shafiq Faizzuddin\AppData\Local\Python\bin\python.exe` or correct the alias. No API key is used for NASA POWER.
+
+### Backend
+
+From repository root, in PowerShell:
+
+```powershell
+& 'C:\Users\Shafiq Faizzuddin\AppData\Local\Python\bin\python.exe' -m venv backend/.venv
+& backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+Set-Location backend
+& .venv/Scripts/python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Use a working `python` command instead of the machine-specific path on other computers. API docs: `http://127.0.0.1:8000/docs`; health: `http://127.0.0.1:8000/api/health`.
+
+### Frontend
+
+In a second terminal:
+
+```powershell
+Set-Location frontend
+npm ci
+npm run dev
+```
+
+Open `http://localhost:5173`. Copy `backend/.env.example` and `frontend/.env.example` to local `.env` files only if overriding defaults. Do not commit `.env`. The frontend uses `VITE_API_BASE_URL`, defaulting to `http://localhost:8000`. The backend uses `AGRISHIFT_CORS_ORIGINS`, defaulting to both `http://localhost:5173` and `http://127.0.0.1:5173`.
+
+## Verification
+
+```powershell
+Set-Location backend
+& .venv/Scripts/python.exe -m pytest -q
+Set-Location ../frontend
+npm run lint
+npm test
+npm run build
+```
+
+Tests use synthetic fixtures and never present them as NASA observations. A live API smoke test with the Kedah example was performed during development; repeat it when the service is running and network access is available.
+
+## Deployment preparation
+
+No public deployment has been made. For Render, point a new web service at the repository's `render.yaml`, set the production `AGRISHIFT_CORS_ORIGINS` to the exact Vercel origin, and confirm `/api/health`. For Vercel, set project root to `frontend`, use its `vercel.json`, and set `VITE_API_BASE_URL` to the HTTPS Render API URL. Build and API credentials are not embedded in source. Test CORS and all five routes in a private preview before any authorized public deployment.
+
+## Evidence, attribution, and status
+
+See [architecture](docs/architecture.md), [data sources and third-party attribution](docs/data_sources.md), [scientific methodology](docs/methodology.md), [limitations](docs/limitations.md), and the current [build status](docs/BUILD_STATUS.md). The initial [requirements](docs/01-requirements-and-mvp.md), [planning architecture](docs/02-architecture-data-and-science.md), and [GitHub backlog](docs/03-issues-and-build-sequence.md) remain as preparation records. The source repository's [MIT license](LICENSE) covers project code; third-party data and libraries retain their own terms. This project is not affiliated with or endorsed by NASA.
+
+For screenshots, capture the farm setup, climate source/coverage view, and a result showing the insufficient-evidence state. Label the hypothetical Kedah inputs and cite the actual NASA retrieval period in any submission materials.
