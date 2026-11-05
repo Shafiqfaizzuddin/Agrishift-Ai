@@ -1,0 +1,9 @@
+{
+  "version": "fao-ecocrop-screening-1",
+  "note": "Published broad species ranges, not local Kedah cultivar validation. Annual rainfall must only be compared with annual rainfall. Soil texture unknown unless cited.",
+  "crops": [
+    {"id":"maize","name":"Maize","scientific_name":"Zea mays","family":"Poaceae","duration_days":[65,365],"temperature_optimal_c":[18,33],"temperature_absolute_c":[10,47],"annual_rainfall_optimal_mm":[600,1200],"annual_rainfall_absolute_mm":[400,1800],"ph_optimal":[5,7],"ph_absolute":[4.5,8.5],"soil_texture":null,"source_url":"https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2175","quality_note":"Species-level Ecocrop range; broad duration; local variety and planting dates unknown."},
+    {"id":"mung-bean","name":"Mung bean","scientific_name":"Vigna radiata","family":"Fabaceae","duration_days":[50,120],"temperature_optimal_c":[21,36],"temperature_absolute_c":[8,40],"annual_rainfall_optimal_mm":[650,900],"annual_rainfall_absolute_mm":[500,1250],"ph_optimal":[5.5,6.2],"ph_absolute":[4.3,8.3],"soil_texture":["clay","loam","sand"],"source_url":"https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2150","quality_note":"Species-level Ecocrop range; drainage matters but farmer report is unverified."},
+    {"id":"sweet-potato","name":"Sweet potato","scientific_name":"Ipomoea batatas","family":"Convolvulaceae","duration_days":[80,170],"temperature_optimal_c":[18,28],"temperature_absolute_c":[10,38],"annual_rainfall_optimal_mm":[750,2000],"annual_rainfall_absolute_mm":[350,5000],"ph_optimal":[5,7],"ph_absolute":[4,8.7],"soil_texture":null,"source_url":"https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1265","quality_note":"Species-level Ecocrop range; local tuber management and drainage not evaluated."}
+  ]
+}
