@@ -3,7 +3,6 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from .catalog import catalog, crops_by_id
 from .climate import ClimateUnavailable, get_climate

@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 import asyncio
+import time
 
 import httpx
 
@@ -8,7 +9,7 @@ import pytest
 from app.catalog import catalog
 from app import climate as climate_module
 from app.climate import ClimateUnavailable, parse_power
-from app.models import Farm
+from app.models import EvaluateRequest, Farm
 from app.rotation import evaluate
 
 
@@ -45,7 +46,8 @@ def test_power_monthly_and_annual_aggregation():
 def test_missing_day_and_units():
     result = parse_power(fixture_power(missing_day=date(2020, 1, 1)), 2020, 2020)
     assert result["monthly"][0]["coverage"] < 1
-    assert result["monthly"][0]["rainfall_mm"] == 60
+    assert result["monthly"][0]["rainfall_mm"] is None
+    assert result["usable_years"] == 0
     bad = fixture_power()
     bad["parameters"]["T2M"]["units"] = "K"
     with pytest.raises(ClimateUnavailable):
@@ -61,6 +63,18 @@ def test_incomplete_month_excludes_year():
     assert result["monthly"][0]["rainfall_mm"] is None
     assert result["usable_years"] == 0
     assert result["annual_rainfall_median_mm"] is None
+
+
+def test_missing_dates_and_negative_precipitation_are_visible():
+    payload = fixture_power()
+    for parameter in payload["properties"]["parameter"].values():
+        parameter.pop("20200101")
+    result = parse_power(payload, 2020, 2020)
+    assert len(result["monthly"]) == 12
+    assert result["monthly"][0]["rainfall_mm"] is None
+    payload = fixture_power()
+    payload["properties"]["parameter"]["PRECTOTCORR"]["20200101"] = -0.1
+    assert parse_power(payload, 2020, 2020)["monthly"][0]["rainfall_mm"] is None
 
 
 def test_nasa_failure_does_not_invent_data(monkeypatch):
@@ -92,8 +106,71 @@ def test_nasa_failure_does_not_invent_data(monkeypatch):
     assert len(calls) == 3
 
 
+def test_rate_limit_respects_retry_after(monkeypatch):
+    climate_module._CACHE.clear()
+    calls = []
+    delays = []
+
+    class Client:
+        def __init__(self, **_):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            return None
+
+        async def get(self, url, params):
+            calls.append((url, params))
+            request = httpx.Request("GET", url, params=params)
+            if len(calls) == 1:
+                return httpx.Response(429, headers={"Retry-After": "2"}, request=request)
+            return httpx.Response(200, json=fixture_power(), request=request)
+
+    async def record_delay(delay):
+        delays.append(delay)
+
+    monkeypatch.setattr(climate_module.httpx, "AsyncClient", Client)
+    monkeypatch.setattr(climate_module.asyncio, "sleep", record_delay)
+    result = asyncio.run(climate_module.get_climate(6.12, 100.36, 2020, 2020))
+    assert result["usable_years"] == 1
+    assert delays == [2]
+    assert len(calls) == 2
+
+
+def test_stale_cache_is_explicit_after_nasa_failure(monkeypatch):
+    climate_module._CACHE.clear()
+    key = (6.12, 100.36, 2020, 2020)
+    climate_module._CACHE[key] = (time.time() - 90000, parse_power(fixture_power(), 2020, 2020))
+
+    class Client:
+        def __init__(self, **_):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_):
+            return None
+
+        async def get(self, url, params):
+            return httpx.Response(503)
+
+    async def no_wait(_):
+        return None
+
+    monkeypatch.setattr(climate_module.httpx, "AsyncClient", Client)
+    monkeypatch.setattr(climate_module.asyncio, "sleep", no_wait)
+    result = asyncio.run(climate_module.get_climate(*key))
+    assert result["from_cache"] is True
+    assert result["stale_cache"] is True
+    assert result["annual_rainfall_median_mm"] == 732
+
+
 def test_cache_keeps_nearby_points_distinct(monkeypatch):
     climate_module._CACHE.clear()
+    monkeypatch.setattr(climate_module, "MAX_CACHE_ENTRIES", 2)
     calls = []
 
     class Client:
@@ -116,6 +193,8 @@ def test_cache_keeps_nearby_points_distinct(monkeypatch):
     assert first["from_cache"] is False
     assert second["from_cache"] is False
     assert len(calls) == 2
+    asyncio.run(climate_module.get_climate(6.127, 100.36, 2020, 2020))
+    assert len(climate_module._CACHE) == 2
 
 
 def test_rotation_insufficient_evidence_and_hard_constraint():
@@ -130,11 +209,29 @@ def test_rotation_insufficient_evidence_and_hard_constraint():
 
 def test_rotation_scoring_and_weights():
     climate = {"usable_years": 4, "annual_rainfall_median_mm": 800, "temperature_mean_c": 27}
-    result = evaluate(farm(), ["maize", "mung-bean"], {"climate": 7, "rotation": 3}, climate)
+    result = evaluate(farm(ph=6.5), ["maize", "mung-bean"], {"climate": 7, "soil": 3}, climate)
     assert result["weights"]["climate"] == pytest.approx(.7)
     assert len(result["scenarios"]) == 1
-    assert all(s["score"] is not None for s in result["scenarios"])
+    assert result["scenarios"][0]["score"] == 92.5
     assert result["ranking_status"] == "screening_only"
+    assert evaluate(farm(ph=6.5), ["maize", "mung-bean"], {"climate": 7, "soil": 3}, climate) == result
+
+
+def test_unvalidated_priorities_withhold_ranking():
+    climate = {"usable_years": 4, "annual_rainfall_median_mm": 800, "temperature_mean_c": 27}
+    for criterion in ("water", "rotation"):
+        result = evaluate(farm(), ["mung-bean", "sweet-potato"], {"climate": 7, criterion: 3}, climate)
+        assert result["ranking_status"] == "insufficient_evidence"
+        assert all(s["score"] is None for s in result["scenarios"])
+        assert all(s["criterion_scores"]["rotation"] is None for s in result["scenarios"])
+
+
+def test_unknown_soil_source_withholds_ranking():
+    climate = {"usable_years": 4, "annual_rainfall_median_mm": 800, "temperature_mean_c": 27}
+    uncertain_farm = farm().model_copy(update={"soil_source": "unknown"})
+    result = evaluate(uncertain_farm, ["mung-bean", "sweet-potato"], {"climate": 7, "soil": 3}, climate)
+    assert result["ranking_status"] == "insufficient_evidence"
+    assert all(any("soil information" in gap for gap in s["evidence_gaps"]) for s in result["scenarios"])
 
 
 def test_outside_annual_rainfall_withholds_ranking():
@@ -150,3 +247,7 @@ def test_health_and_coordinate_validation():
     assert catalog()["version"]
     with pytest.raises(ValidationError):
         Farm(latitude=91, longitude=100, area_hectares=1, soil_type="loam", soil_source="unknown", irrigation="none", existing_crop_id="maize")
+    with pytest.raises(ValidationError):
+        EvaluateRequest(farm=farm(), crop_ids=["maize", "mung-bean"], priorities={"climate": float("inf")}, start_year=2020, end_year=2020)
+    with pytest.raises(ValueError):
+        evaluate(farm(), ["mung-bean"], {"climate": float("nan")}, {"usable_years": 4, "annual_rainfall_median_mm": 800, "temperature_mean_c": 27})
