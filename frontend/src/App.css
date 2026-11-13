@@ -136,6 +136,35 @@ h2 {
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
+.regional-section {
+  margin-top: 54px;
+}
+.regional-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 18px;
+}
+.regional-heading p {
+  max-width: 380px;
+}
+.context-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+}
+.context-card h3 {
+  margin-top: 18px;
+}
+.context-evidence {
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.55;
+}
+.context-evidence a {
+  color: #1d6c4d;
+}
 .card,
 .panel,
 .stat {
@@ -316,6 +345,9 @@ h2 {
   font-weight: 800;
 }
 @media (max-width: 800px) {
+  .regional-heading {
+    display: block;
+  }
   .hero,
   .two {
     grid-template-columns: 1fr;

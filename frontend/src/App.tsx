@@ -42,11 +42,11 @@ const example: Farm = {
   latitude: 6.12,
   longitude: 100.36,
   area_hectares: 1.5,
-  soil_type: "loam",
-  soil_source: "farmer_report",
-  soil_ph: 6.1,
-  irrigation: "limited",
-  existing_crop_id: "maize",
+  soil_type: "unknown",
+  soil_source: "unknown",
+  soil_ph: null,
+  irrigation: "unknown",
+  existing_crop_id: "paddy",
 };
 const icon = L.divIcon({
   html: '<span style="display:block;width:20px;height:20px;background:#176a4d;border:3px solid white;border-radius:50%;box-shadow:0 2px 9px #143d35"></span>',
@@ -122,17 +122,18 @@ function Head({
     </div>
   );
 }
-function Home() {
+function Home({ catalog }: { catalog: Catalog | null }) {
+  const regional = catalog?.regional_context ?? [];
   return (
     <>
       <div className="hero">
         <div>
           <span className="eyebrow">Earth data for better questions</span>
-          <h1>Plan the next season with a clearer view of the past.</h1>
+          <h1>Explore Kedah crop systems through historical climate.</h1>
           <p className="lead">
-            Explore crop rotations with NASA POWER historical climate, your farm
-            details, and published crop ranges. Inspect the evidence and
-            uncertainty behind each comparison.
+            View NASA POWER climate for a hypothetical Kedah farm and inspect
+            sourced regional crop context. Seasonal rotation comparisons are
+            available only for the separate exploratory annual catalog.
           </p>
           <div className="actions">
             <Link className="button" to="/farm">
@@ -160,7 +161,7 @@ function Home() {
           </span>
         </div>
       </div>
-      <h2>From location to comparison</h2>
+      <h2>From location to evidence</h2>
       <div className="steps">
         <div className="card">
           <MapPin color="#258454" />
@@ -185,6 +186,49 @@ function Home() {
           </p>
         </div>
       </div>
+      <section
+        className="regional-section"
+        aria-labelledby="kedah-crops-heading"
+      >
+        <div className="regional-heading">
+          <div>
+            <span className="eyebrow">Kedah crop context</span>
+            <h2 id="kedah-crops-heading">Staple and industrial crops</h2>
+          </div>
+          <p className="muted small">
+            Regional cultivation does not establish suitability for a particular
+            field. Local scientific review is pending.
+          </p>
+        </div>
+        <div className="context-grid">
+          {regional.map((crop) => (
+            <article className="card context-card" key={crop.id}>
+              <span className="pill">
+                {crop.planning_horizon === "multi_year"
+                  ? "Multi-year crop"
+                  : "Managed seasonal crop"}
+              </span>
+              <h3>{crop.name}</h3>
+              <p className="small muted">
+                <i>{crop.scientific_name}</i>
+              </p>
+              <p className="small">{crop.comparison_reason}</p>
+              <p className="small muted">
+                Context only · scientific review pending
+              </p>
+              <ul className="context-evidence">
+                {crop.evidence.map((item) => (
+                  <li key={item.url}>
+                    <a href={item.url} target="_blank" rel="noreferrer">
+                      {item.source_name} ({item.observation_year}) ↗
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
     </>
   );
 }
@@ -199,6 +243,9 @@ function FarmPage({
 }) {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const contextCrop = catalog?.regional_context?.find(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
   const patch = (v: Partial<Farm>) => setFarm({ ...farm, ...v });
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -357,14 +404,30 @@ function FarmPage({
                 value={farm.existing_crop_id}
                 onChange={(e) => patch({ existing_crop_id: e.target.value })}
               >
-                {catalog?.crops.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                <optgroup label="Kedah staple and industrial context">
+                  {catalog?.regional_context?.map((crop) => (
+                    <option key={crop.id} value={crop.id}>
+                      {crop.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Exploratory annual comparison">
+                  {catalog?.crops.map((crop) => (
+                    <option key={crop.id} value={crop.id}>
+                      {crop.name}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </label>
           </div>
+          {contextCrop && (
+            <p className="note warn">
+              {contextCrop.name} is available for historical climate context.{" "}
+              {contextCrop.comparison_reason} No seasonal rotation score will be
+              calculated.
+            </p>
+          )}
           {error && (
             <p className="error" role="alert">
               {error}
@@ -382,10 +445,12 @@ function FarmPage({
 }
 function ClimatePage({
   farm,
+  catalog,
   climate,
   setClimate,
 }: {
   farm: Farm;
+  catalog: Catalog | null;
   climate: Climate | null;
   setClimate: (v: Climate | null) => void;
 }) {
@@ -421,6 +486,9 @@ function ClimatePage({
     })) || [];
   const incompleteMonths =
     climate?.monthly.filter((month) => month.rainfall_mm === null).length ?? 0;
+  const contextOnly = catalog?.regional_context?.some(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
   return (
     <>
       <Head
@@ -557,7 +625,8 @@ function ClimatePage({
               Edit farm
             </Link>
             <Link className="button" to="/planner">
-              Choose crops <ArrowRight size={16} />
+              {contextOnly ? "Review crop evidence" : "Choose crops"}{" "}
+              <ArrowRight size={16} />
             </Link>
           </div>
         </>
@@ -592,12 +661,76 @@ function PlannerPage({
         ? selected.filter((x) => x !== id)
         : [...selected, id],
     );
+  if (!catalog) {
+    return (
+      <p className="loading" role="status">
+        Loading crop catalog…
+      </p>
+    );
+  }
+  const contextCrop = catalog.regional_context?.find(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
+  if (contextCrop) {
+    return (
+      <>
+        <Head
+          step="Step 3 / 4"
+          title="Regional crop evidence"
+          subtitle="Historical climate is available; seasonal rotation scoring for this crop awaits local scientific review."
+        />
+        <section className="panel">
+          <span className="pill">
+            {contextCrop.planning_horizon === "multi_year"
+              ? "Multi-year crop"
+              : "Managed seasonal crop"}
+          </span>
+          <h2>{contextCrop.name}</h2>
+          <p className="muted">
+            <i>{contextCrop.scientific_name}</i>
+          </p>
+          <p className="note warn" role="status">
+            {contextCrop.comparison_reason} No rotation score or farm-specific
+            suitability claim is available.
+          </p>
+          <h3>Regional evidence</h3>
+          <ul>
+            {contextCrop.evidence.map((item) => (
+              <li key={item.url}>
+                {item.claim}{" "}
+                <a
+                  className="source"
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {item.source_name} ({item.observation_year}) ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            This evidence shows regional occurrence, not suitability for the
+            selected field. Review status: pending local scientific review.
+          </p>
+        </section>
+        <div className="actions">
+          <Link className="button alt" to="/climate">
+            Back to climate
+          </Link>
+          <Link className="button" to="/farm">
+            Edit farm
+          </Link>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <Head
         step="Step 3 / 4"
         title="Build a comparison"
-        subtitle="Choose two or three possible next crops. Your current crop anchors each sequence."
+        subtitle="Choose two or three crops from the exploratory annual catalog. Your current crop anchors each sequence."
       />
       <section className="panel">
         <h2>Candidate crops</h2>
@@ -909,7 +1042,7 @@ function Content() {
       )}
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home catalog={catalog} />} />
           <Route
             path="/farm"
             element={
@@ -929,6 +1062,7 @@ function Content() {
             element={
               <ClimatePage
                 farm={farm}
+                catalog={catalog}
                 climate={climate}
                 setClimate={setClimate}
               />

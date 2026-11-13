@@ -1,10 +1,18 @@
 # Build status
 
-**Branch:** `feat/agrishift-mvp`  
-**Status:** Audited exploratory MVP on draft PR #15. Local audit checks pass; scientific and public deployment readiness remain open.
-**Date:** 2026-11-06 (Malaysia)
+**Branch:** `20261113_update`
+**Status:** Kedah staple and industrial crop context update implemented and locally verified. The previously audited exploratory MVP remains available; scientific and public deployment readiness remain open.
+**Date:** 2026-11-13 (Malaysia)
 
 This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed scenario is an exploratory screen, not a validated recommendation.
+
+## Kedah crop-context update (2026-11-13)
+
+| Stage | Status | Verification and remaining work |
+|---|---|---|
+| 1. Regional evidence and backend contract | Complete | Five context-only crops (paddy, rubber, oil palm, coconut, Robusta coffee) have cited Kedah evidence, year, planning horizon, and explicit review status. No agronomic thresholds were added. `/api/crops` exposes them; `/api/rotations/evaluate` rejects them before a NASA request. Focused backend suite: **19 passed**. |
+| 2. Frontend context and guardrails | Complete | Overview shows the five sourced regional crops; farm setup accepts them as current-crop context. The hypothetical default is paddy with soil and irrigation unknown. The planner shows evidence and no evaluation action for context-only crops. Frontend: **8 tests passed**, lint and production build passed; build retains an ~856 kB chunk warning. Windows Prettier line-ending configuration added and formatting check passed. |
+| 3. Documentation and full verification | Complete for code scope | README, architecture, methodology, data sources, limitations, and the Kedah evidence register updated. Backend: **19 passed**. Frontend: **8 passed**, lint, formatting, and production build passed. Local HTTP: `/api/health` returned 200, `/api/crops` returned 3 exploratory and 5 regional crops, frontend returned 200, and its configured API URL pointed to port 8001. The ~856 kB build chunk warning remains. Local agronomy review and any seasonal paddy or perennial model remain pending. |
 
 ## Phase record
 

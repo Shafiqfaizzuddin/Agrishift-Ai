@@ -2,6 +2,33 @@ import { afterEach, expect, it, vi } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import App from "./App";
 
+const regionalFixture = {
+  id: "paddy",
+  name: "Paddy (rice)",
+  scientific_name: "Oryza sativa",
+  system: "managed_paddy",
+  planning_horizon: "seasonal_schedule",
+  comparison_status: "context_only",
+  comparison_reason: "A local planting schedule and field rules need review.",
+  review_status: "pending_local_scientific_review",
+  evidence: [
+    {
+      claim: "Paddy is grown in Kedah (test fixture).",
+      source_name: "TEST FIXTURE SOURCE",
+      observation_year: 2023,
+      url: "https://example.org/test-fixture",
+    },
+  ],
+};
+const catalogFixture = {
+  version: "test",
+  note: "fixture",
+  crops: [{ id: "maize", name: "Maize" }],
+  regional_context_version: "test",
+  regional_context_note: "fixture",
+  regional_context: [regionalFixture],
+};
+
 vi.mock("react-leaflet", () => ({
   MapContainer: ({ children }: { children: React.ReactNode }) => (
     <div>{children}</div>
@@ -23,18 +50,42 @@ it("introduces the evidence-based workflow and example status", async () => {
     "fetch",
     vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ version: "test", note: "fixture", crops: [] }),
+      json: async () => catalogFixture,
     }),
   );
   render(<App />);
   expect(
-    screen.getByRole("heading", { name: /plan the next season/i }),
+    screen.getByRole("heading", { name: /explore kedah crop systems/i }),
   ).toBeInTheDocument();
   expect(screen.getByText(/hypothetical farm in Kedah/i)).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /analyze a farm/i })).toHaveAttribute(
     "href",
     "/farm",
   );
+  expect(
+    await screen.findByRole("heading", { name: "Paddy (rice)" }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("link", { name: /TEST FIXTURE SOURCE/i }),
+  ).toHaveAttribute("href", "https://example.org/test-fixture");
+});
+
+it("does not offer seasonal scoring for the default paddy example", async () => {
+  window.history.pushState({}, "", "/planner");
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ ok: true, json: async () => catalogFixture }),
+  );
+  render(<App />);
+  expect(
+    await screen.findByRole("heading", { name: /regional crop evidence/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByText(/no rotation score or farm-specific/i),
+  ).toBeInTheDocument();
+  expect(
+    screen.queryByRole("button", { name: /compare scenarios/i }),
+  ).not.toBeInTheDocument();
 });
 
 it("rejects an invalid farm area before climate retrieval", () => {
