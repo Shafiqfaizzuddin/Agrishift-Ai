@@ -34,6 +34,15 @@ def test_catalog_has_referenced_ranges():
     assert all(c["source_url"].startswith("https://ecocrop.apps.fao.org/") for c in catalog()["crops"])
 
 
+def test_kedah_context_is_sourced_and_has_no_screening_thresholds():
+    regional = catalog()["regional_context"]
+    assert {crop["id"] for crop in regional} == {"paddy", "rubber", "oil-palm", "coconut", "coffee-robusta"}
+    assert all(crop["comparison_status"] == "context_only" for crop in regional)
+    assert all(crop["review_status"] == "pending_local_scientific_review" for crop in regional)
+    assert all(crop["evidence"] and all(item["url"].startswith("https://") for item in crop["evidence"]) for crop in regional)
+    assert all(not any(key.endswith(("_optimal_c", "_absolute_c", "_optimal_mm", "_absolute_mm")) for key in crop) for crop in regional)
+
+
 def test_power_monthly_and_annual_aggregation():
     result = parse_power(fixture_power(), 2020, 2020)
     assert result["usable_years"] == 1
