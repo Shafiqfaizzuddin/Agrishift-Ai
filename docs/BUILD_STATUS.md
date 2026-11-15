@@ -1,7 +1,7 @@
 # Build status
 
 **Branch:** `20261113_update`
-**Status:** Kedah context update is deployed and smoke-tested on Vercel. Scientific validation, traffic controls, and broader browser testing remain open.
+**Status:** User-journey clarity update is deployed and smoke-tested on Vercel. Scientific validation, traffic controls, and broader browser testing remain open.
 **Date:** 2026-11-15 (Malaysia)
 
 This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed scenario is an exploratory screen, not a validated recommendation.
@@ -12,7 +12,15 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 - Added a historical rainfall summary derived from usable monthly NASA POWER patterns, including an explicit no-forecast caveat and a missing-coverage fallback.
 - Added a paddy/perennial evidence summary showing known context, unverified farm/scientific inputs, and a next step. Clarified the exploratory annual result when an overall ranking is withheld.
 - Frontend verification: Vitest **9 passed**, ESLint passed, Prettier check passed, TypeScript/Vite production build passed, and `git diff --check` passed. The build still warns about an approximately 861 kB JavaScript chunk.
-- No backend algorithm, crop threshold, NASA adapter, or deployment was changed. The existing production site remains on the prior deployment until a deliberate release. Scientific review is still required before paddy or perennial recommendations.
+- The UI commit `6abf314` changed no backend algorithm, crop threshold, or NASA adapter. Scientific review is still required before paddy or perennial recommendations.
+
+## Vercel production release: user-journey clarity (2026-11-15)
+
+- After explicit user authorization, deployed feature-branch UI commit `6abf314` with `npx --yes vercel@latest deploy --prod --yes --logs`. Vercel deployment `dpl_98DMCgroWFGpBf4gb3VJhi8B6788` reached **READY** and was aliased to <https://agrishift-ai.vercel.app>. `main` was not merged.
+- The Vercel cloud build passed the Vite/TypeScript build and packaged the FastAPI service with Python 3.14. The approximately 861 kB JavaScript chunk warning remains.
+- Unauthenticated public HTTP returned 200 for `/`, `/farm`, `/climate`, `/api/health`, and `/api/crops`. The served JavaScript bundle contained the new scope and climate-explanation text. Health returned `status: ok`; the catalog returned 3 exploratory and 5 Kedah context crops.
+- The live 2015–2024 NASA POWER climate request for the hypothetical Kedah point returned 120 monthly records, 10 usable years, temperature unit `C`, and precipitation unit `mm/day`. A paddy evaluation returned HTTP 422 with `CROP_CONTEXT_ONLY`.
+- Direct browser interaction, mobile layout, failure states, CI for the documentation commit, and sustained traffic were not verified in this release pass. The unrelated untracked preparation report was not included in the commits.
 
 ## Vercel hosting preparation (2026-11-15)
 

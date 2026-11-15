@@ -14,7 +14,9 @@ Vercel's dry-run manifest detected Services and excluded the local `.env.local` 
 
 ## 3. First deployment completed
 
-The CLI rejected the attempted Preview deployment because Vercel assigns a new project's **first deployment to Production**. After explicit user approval, `npx --yes vercel@latest deploy --prod --yes --logs` deployed the checked-out feature-branch source. The deployment is **Ready** at [agrishift-ai.vercel.app](https://agrishift-ai.vercel.app), Vercel deployment ID `dpl_8F6XKFDnF7a91J9VyV5FnnUim8VW`. This did not merge the Git branch. The build used Python 3.14 and completed both Vite and FastAPI services.
+The CLI rejected the attempted Preview deployment because Vercel assigns a new project's **first deployment to Production**. After explicit user approval, `npx --yes vercel@latest deploy --prod --yes --logs` deployed the checked-out feature-branch source. That first deployment reached **Ready** at [agrishift-ai.vercel.app](https://agrishift-ai.vercel.app), Vercel deployment ID `dpl_8F6XKFDnF7a91J9VyV5FnnUim8VW`. This did not merge the Git branch. The build used Python 3.14 and completed both Vite and FastAPI services.
+
+On 2026-11-15, after separate user authorization, UI clarity commit `6abf314` was deployed to Production as `dpl_98DMCgroWFGpBf4gb3VJhi8B6788`. Vercel reported **READY** and aliased it to the same public URL. The cloud build completed both services. The feature branch remains separate from `main`.
 
 Subsequent feature-branch deployments can target Preview with `npx --yes vercel@latest deploy --environment preview --yes --logs`. The current Production URL will not update on a Git push because automatic Git deployment is disconnected.
 
@@ -31,6 +33,8 @@ The following were checked against the public Production URL on 2026-11-15 (Mala
 5. The separate exploratory evaluation returned two scenarios with `insufficient_evidence`, not unsupported scores.
 
 Recheck these paths after every deployment. A direct refresh of every non-root SPA route, mobile layout, error state, and a sustained traffic test were not completed in this deployment pass. The CLI's authenticated `vercel curl` check created an automation bypass secret; it was revoked immediately after the public URL was verified without credentials.
+
+The UI clarity deployment was checked without credentials: `/`, `/farm`, `/climate`, `/api/health`, and `/api/crops` returned 200; the public bundle contained the new user-journey text; the Kedah 2015–2024 climate request returned 120 monthly records and 10 usable years; and paddy evaluation returned 422 `CROP_CONTEXT_ONLY`. Browser interaction, mobile layout, and sustained traffic remain open checks.
 
 The NASA POWER request may be slow on a cold function instance. The app uses a per-instance in-memory cache, so requests on another instance or after a restart can fetch NASA again. This prototype has no user authentication or application-level request throttling; review traffic and function usage before sharing the URL broadly.
 
