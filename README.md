@@ -74,7 +74,7 @@ Tests use synthetic fixtures and never present them as NASA observations. A live
 
 ## Vercel hosting
 
-The repository-root `vercel.json` configures a Vite web service and a FastAPI service on the same Vercel origin. A Vercel project named `shafiq10/agrishift-ai` has been created from the **repository root**, but no deployment has been made. Vercel requires its first deployment to target Production; that public step awaits explicit approval. Leave `VITE_API_BASE_URL` unset on Vercel so browser requests use `/api` on the same origin. The backend `.python-version` selects Python 3.14. See the [step-by-step Vercel guide](docs/deploy_vercel.md) for the current status, deployment, and verification steps. The older `frontend/vercel.json` and `render.yaml` remain available for a separate frontend/Render deployment if needed.
+The application is hosted at [agrishift-ai.vercel.app](https://agrishift-ai.vercel.app). The repository-root `vercel.json` configures a Vite web service and a FastAPI service on the same origin, so browser requests use `/api` without `VITE_API_BASE_URL`. The first deployment was made from feature branch `20261113_update` after explicit approval; it did not merge `main`. The Vercel project is not yet connected for automatic Git deployments, so subsequent releases require a deliberate deployment. The backend `.python-version` selects Python 3.14. See the [step-by-step Vercel guide](docs/deploy_vercel.md) for verification and update instructions. The older `frontend/vercel.json` and `render.yaml` remain available for a separate frontend/Render deployment if needed.
 
 ## Evidence, attribution, and status
 
