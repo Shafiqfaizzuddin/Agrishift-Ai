@@ -1,7 +1,7 @@
 # Build status
 
 **Branch:** `20261113_update`
-**Status:** Kedah context update and one-project Vercel Services configuration are locally verified. Cloud deployment and scientific review remain open.
+**Status:** Kedah context update and one-project Vercel Services configuration are locally verified. The Vercel project exists but has no deployment; scientific review remains open.
 **Date:** 2026-11-15 (Malaysia)
 
 This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed scenario is an exploratory screen, not a validated recommendation.
@@ -11,6 +11,8 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 - Added repository-root `vercel.json` for Vite and FastAPI services under one origin. Production builds now use same-origin `/api` calls when `VITE_API_BASE_URL` is unset. Added a step-by-step guide in `deploy_vercel.md`.
 - Local verification: backend Pytest **19 passed** (outside the restricted filesystem sandbox, where the async harness stalled); frontend Vitest **8 passed**, lint, format check, and production build passed. No `localhost:8000` API URL appears in the production assets. The ~856 kB JavaScript chunk warning remains.
 - Official Vercel CLI 65.16.0 detected both services. `vercel dev --local` could not finish on this Windows machine because the CLI cache could not create symlinks (`EPERM`). A cloud build and live route test are still needed; this is not evidence of a deployed application.
+- The Vercel GitHub app was installed for only this repository. CLI created and linked `shafiq10/agrishift-ai` with root `.` and Services preset, without automatic Git deployment. A dry run found 51 included files and excluded the local token, virtual environments, generated assets, tests, and documentation.
+- Vercel rejected a first Preview deployment because a new project's first deployment must target Production. Automatic approval review rejected the public Production deployment command before it ran, citing the need for explicit authorization for this newly disclosed public step. No deployment has occurred; live routes remain unverified.
 
 ## Kedah crop-context update (2026-11-13)
 
@@ -33,7 +35,7 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 | 7. Frontend | Complete for MVP | Five responsive screens, charts, map, inputs, scenario cards, source links, loading, error, and empty states. The workflow was visually checked in the local browser. |
 | 8. Integration | Complete for MVP | Farm → climate → planner → results exercised with live NASA data. Default Kedah run returned two exploratory scenarios and `insufficient_evidence`, not a fabricated score. |
 | 9. Testing | Passing, with gaps | Backend tests cover aggregation, missing values, unit mismatch, NASA failures/429, cache isolation, range constraints, scoring, and typed API contracts. Frontend tests cover setup validation, loading, stale data, catalog retry, API errors, and basic navigation. Automated browser E2E and accessibility tests are absent. |
-| 10. Deployment readiness | Prepared, cloud verification pending | Repository-root Vercel Services configuration for frontend and API, plus the older Render blueprint. Local build and tests pass; cloud build, live API routes, and preview workflow must be verified. |
+| 10. Deployment readiness | Project created; deployment blocked pending approval | Repository-root Vercel Services configuration for frontend and API, plus the older Render blueprint. Local build and tests pass. First Vercel deployment requires Production approval; cloud build and live API routes remain unverified. |
 | 11. Documentation | Complete for MVP | README, architecture, methodology, data sources, limitations, coding rules, and this status file. Initial preparation documents retained. |
 | 12. Quality review | Local audit complete | Local build, tests, lint, formatting, live API, browser workflow, working-tree review, dependency audit, and secret scan performed. Pre-audit push and PR CI passed; see live PR checks for audit commits. Production remains unverified. |
 
@@ -53,6 +55,6 @@ This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed
 1. Ask a local agronomist or extension officer to review crop variety choice, planting seasons, drainage, waterlogging, pest/disease rotations, and the meaning of the family-diversity heuristic for Kedah.
 2. Validate actual farm soil pH, texture, irrigation, and history before interpreting any scenario. Soil texture and irrigation currently have no numeric effect.
 3. Confirm FAO Ecocrop reuse terms and capture dated source snapshots before public presentation. FAO says the database was discontinued around 2015; species ranges alone do not establish local feasibility.
-4. Verify the Vercel feature-branch preview and API routes. No merge has occurred.
+4. Obtain explicit approval for Vercel's first public Production deployment, then verify its cloud build and API routes. No deployment or merge has occurred.
 
 Optional imagery, PDF export, localization, and AI explanations were not implemented.
