@@ -87,6 +87,28 @@ class CatalogResult(BaseModel):
     version: str
     note: str
     crops: list["CropProfile"]
+    regional_context_version: str
+    regional_context_note: str
+    regional_context: list["RegionalCropProfile"]
+
+
+class RegionalEvidence(BaseModel):
+    claim: str
+    source_name: str
+    observation_year: int
+    url: str
+
+
+class RegionalCropProfile(BaseModel):
+    id: str
+    name: str
+    scientific_name: str
+    system: Literal["managed_paddy", "perennial_crop"]
+    planning_horizon: Literal["seasonal_schedule", "multi_year"]
+    comparison_status: Literal["context_only"]
+    comparison_reason: str
+    review_status: Literal["pending_local_scientific_review"]
+    evidence: list[RegionalEvidence]
 
 
 class CropProfile(BaseModel):

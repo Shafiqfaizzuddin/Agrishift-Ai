@@ -42,11 +42,11 @@ const example: Farm = {
   latitude: 6.12,
   longitude: 100.36,
   area_hectares: 1.5,
-  soil_type: "loam",
-  soil_source: "farmer_report",
-  soil_ph: 6.1,
-  irrigation: "limited",
-  existing_crop_id: "maize",
+  soil_type: "unknown",
+  soil_source: "unknown",
+  soil_ph: null,
+  irrigation: "unknown",
+  existing_crop_id: "paddy",
 };
 const icon = L.divIcon({
   html: '<span style="display:block;width:20px;height:20px;background:#176a4d;border:3px solid white;border-radius:50%;box-shadow:0 2px 9px #143d35"></span>',
@@ -67,6 +67,23 @@ const months = [
   "Nov",
   "Dec",
 ];
+function rainfallHighlights(climate: Climate) {
+  const usable = climate.monthly_patterns.flatMap((row) =>
+    row.rainfall_median_mm === null
+      ? []
+      : [
+          {
+            month: months[row.month - 1] ?? `Month ${row.month}`,
+            mm: row.rainfall_median_mm,
+          },
+        ],
+  );
+  if (usable.length < 2) return null;
+  return {
+    wettest: usable.reduce((a, b) => (a.mm >= b.mm ? a : b)),
+    driest: usable.reduce((a, b) => (a.mm <= b.mm ? a : b)),
+  };
+}
 function MapClick({ onPick }: { onPick: (lat: number, lon: number) => void }) {
   useMapEvents({
     click: (e) =>
@@ -122,17 +139,18 @@ function Head({
     </div>
   );
 }
-function Home() {
+function Home({ catalog }: { catalog: Catalog | null }) {
+  const regional = catalog?.regional_context ?? [];
   return (
     <>
       <div className="hero">
         <div>
           <span className="eyebrow">Earth data for better questions</span>
-          <h1>Plan the next season with a clearer view of the past.</h1>
+          <h1>Explore Kedah crop systems through historical climate.</h1>
           <p className="lead">
-            Explore crop rotations with NASA POWER historical climate, your farm
-            details, and published crop ranges. Inspect the evidence and
-            uncertainty behind each comparison.
+            Explore historical NASA POWER climate for a hypothetical Kedah farm.
+            See what the data supports, what the farm still needs to tell us,
+            and why a crop conclusion may be unavailable.
           </p>
           <div className="actions">
             <Link className="button" to="/farm">
@@ -160,7 +178,21 @@ function Home() {
           </span>
         </div>
       </div>
-      <h2>From location to comparison</h2>
+      <section className="scope-note" aria-labelledby="scope-heading">
+        <h2 id="scope-heading">Know what this example can answer</h2>
+        <p>
+          The default paddy journey ends with a climate and evidence summary,
+          not a rotation recommendation. Paddy needs local schedule, water,
+          drainage, and crop-requirement review before a farm-specific
+          comparison is defensible.
+        </p>
+        <p>
+          A separate maize, mung bean, and sweet potato screen can compare
+          exploratory two-crop sequences. Its evidence gaps may still prevent a
+          ranking.
+        </p>
+      </section>
+      <h2>From location to evidence</h2>
       <div className="steps">
         <div className="card">
           <MapPin color="#258454" />
@@ -179,12 +211,56 @@ function Home() {
         </div>
         <div className="card">
           <Sprout color="#258454" />
-          <h3>03 · Compare scenarios</h3>
+          <h3>03 · Understand the outcome</h3>
           <p className="muted">
-            Inspect screening criteria, trade-offs, and missing evidence.
+            Review supported comparisons or see exactly why more evidence is
+            needed.
           </p>
         </div>
       </div>
+      <section
+        className="regional-section"
+        aria-labelledby="kedah-crops-heading"
+      >
+        <div className="regional-heading">
+          <div>
+            <span className="eyebrow">Kedah crop context</span>
+            <h2 id="kedah-crops-heading">Staple and industrial crops</h2>
+          </div>
+          <p className="muted small">
+            Regional cultivation does not establish suitability for a particular
+            field. Local scientific review is pending.
+          </p>
+        </div>
+        <div className="context-grid">
+          {regional.map((crop) => (
+            <article className="card context-card" key={crop.id}>
+              <span className="pill">
+                {crop.planning_horizon === "multi_year"
+                  ? "Multi-year crop"
+                  : "Managed seasonal crop"}
+              </span>
+              <h3>{crop.name}</h3>
+              <p className="small muted">
+                <i>{crop.scientific_name}</i>
+              </p>
+              <p className="small">{crop.comparison_reason}</p>
+              <p className="small muted">
+                Context only · scientific review pending
+              </p>
+              <ul className="context-evidence">
+                {crop.evidence.map((item) => (
+                  <li key={item.url}>
+                    <a href={item.url} target="_blank" rel="noreferrer">
+                      {item.source_name} ({item.observation_year}) ↗
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </article>
+          ))}
+        </div>
+      </section>
     </>
   );
 }
@@ -199,6 +275,9 @@ function FarmPage({
 }) {
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const contextCrop = catalog?.regional_context?.find(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
   const patch = (v: Partial<Farm>) => setFarm({ ...farm, ...v });
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -254,6 +333,11 @@ function FarmPage({
         </section>
         <form className="panel" onSubmit={submit}>
           <h2>Farm profile</h2>
+          <p className="small muted">
+            Coordinates drive the NASA climate request. The other details are
+            farmer-supplied context; only pH and its source enter the separate
+            exploratory annual-crop screen.
+          </p>
           <div className="fields">
             <label className="field">
               Latitude
@@ -357,14 +441,34 @@ function FarmPage({
                 value={farm.existing_crop_id}
                 onChange={(e) => patch({ existing_crop_id: e.target.value })}
               >
-                {catalog?.crops.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
+                <optgroup label="Kedah staple and industrial context">
+                  {catalog?.regional_context?.map((crop) => (
+                    <option key={crop.id} value={crop.id}>
+                      {crop.name}
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="Exploratory annual comparison">
+                  {catalog?.crops.map((crop) => (
+                    <option key={crop.id} value={crop.id}>
+                      {crop.name}
+                    </option>
+                  ))}
+                </optgroup>
               </select>
             </label>
           </div>
+          <p className="input-role small">
+            Farm area, soil texture, and irrigation are recorded for context;
+            they do not currently change a score. Leave unknown values unknown.
+          </p>
+          {contextCrop && (
+            <p className="note warn">
+              This path will show historical climate and regional evidence for{" "}
+              {contextCrop.name}. It will not calculate a seasonal rotation
+              score. {contextCrop.comparison_reason}
+            </p>
+          )}
           {error && (
             <p className="error" role="alert">
               {error}
@@ -382,10 +486,12 @@ function FarmPage({
 }
 function ClimatePage({
   farm,
+  catalog,
   climate,
   setClimate,
 }: {
   farm: Farm;
+  catalog: Catalog | null;
   climate: Climate | null;
   setClimate: (v: Climate | null) => void;
 }) {
@@ -421,6 +527,10 @@ function ClimatePage({
     })) || [];
   const incompleteMonths =
     climate?.monthly.filter((month) => month.rainfall_mm === null).length ?? 0;
+  const rainfall = climate ? rainfallHighlights(climate) : null;
+  const contextOnly = catalog?.regional_context?.some(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
   return (
     <>
       <Head
@@ -527,6 +637,29 @@ function ClimatePage({
               </p>
             </div>
           </div>
+          <section className="panel" aria-labelledby="climate-meaning">
+            <h2 id="climate-meaning">What the historical record shows</h2>
+            {rainfall ? (
+              <p>
+                Across {climate.period.start_year}–{climate.period.end_year},
+                the median monthly rainfall was highest in{" "}
+                {rainfall.wettest.month} ({Math.round(rainfall.wettest.mm)} mm)
+                and lowest in {rainfall.driest.month} (
+                {Math.round(rainfall.driest.mm)} mm) among months with usable
+                data.
+              </p>
+            ) : (
+              <p>
+                Too few complete monthly rainfall records are available to
+                describe a seasonal pattern.
+              </p>
+            )}
+            <p className="small muted">
+              These are past values for a NASA grid point, not field
+              measurements or a prediction of the next planting season. They
+              cannot by themselves establish crop suitability.
+            </p>
+          </section>
           <div className="note">
             <strong>Source:</strong> {climate.source},{" "}
             {climate.parameters.join(", ")} (temperature {climate.units.T2M},
@@ -557,7 +690,8 @@ function ClimatePage({
               Edit farm
             </Link>
             <Link className="button" to="/planner">
-              Choose crops <ArrowRight size={16} />
+              {contextOnly ? "Review crop evidence" : "Choose crops"}{" "}
+              <ArrowRight size={16} />
             </Link>
           </div>
         </>
@@ -568,6 +702,7 @@ function ClimatePage({
 function PlannerPage({
   catalog,
   farm,
+  climate,
   selected,
   setSelected,
   priorities,
@@ -578,6 +713,7 @@ function PlannerPage({
 }: {
   catalog: Catalog | null;
   farm: Farm;
+  climate: Climate | null;
   selected: string[];
   setSelected: (v: string[]) => void;
   priorities: Record<string, number>;
@@ -592,12 +728,127 @@ function PlannerPage({
         ? selected.filter((x) => x !== id)
         : [...selected, id],
     );
+  if (!catalog) {
+    return (
+      <p className="loading" role="status">
+        Loading crop catalog…
+      </p>
+    );
+  }
+  const contextCrop = catalog.regional_context?.find(
+    (crop) => crop.id === farm.existing_crop_id,
+  );
+  if (contextCrop) {
+    return (
+      <>
+        <Head
+          step="Step 3 / 4"
+          title="Regional crop evidence"
+          subtitle="Historical climate is available; seasonal rotation scoring for this crop awaits local scientific review."
+        />
+        <section className="panel">
+          <span className="pill">
+            {contextCrop.planning_horizon === "multi_year"
+              ? "Multi-year crop"
+              : "Managed seasonal crop"}
+          </span>
+          <h2>{contextCrop.name}</h2>
+          <p className="muted">
+            <i>{contextCrop.scientific_name}</i>
+          </p>
+          <p className="note warn" role="status">
+            {contextCrop.comparison_reason} No rotation score or farm-specific
+            suitability claim is available.
+          </p>
+          <h3>Regional evidence</h3>
+          <ul>
+            {contextCrop.evidence.map((item) => (
+              <li key={item.url}>
+                {item.claim}{" "}
+                <a
+                  className="source"
+                  href={item.url}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  {item.source_name} ({item.observation_year}) ↗
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="small muted">
+            This evidence shows regional occurrence, not suitability for the
+            selected field. Review status: pending local scientific review.
+          </p>
+        </section>
+        <div className="summary-grid" aria-label="Farm analysis summary">
+          <section className="card">
+            <h3>What we know</h3>
+            <p>
+              {climate
+                ? `NASA POWER provides historical gridded climate for ${climate.period.start_year}–${climate.period.end_year}, with ${climate.usable_years} complete years.`
+                : "Historical climate has not been loaded for this location yet."}{" "}
+              Regional sources document {contextCrop.name} in Kedah.
+            </p>
+            {climate && (
+              <p className="small muted">
+                Median annual rain:{" "}
+                {climate.annual_rainfall_median_mm ?? "unknown"}
+                {climate.annual_rainfall_median_mm === null ? "" : " mm"}; mean
+                annual temperature: {climate.temperature_mean_c ?? "unknown"}
+                {climate.temperature_mean_c === null ? "" : " °C"}. These are
+                historical grid summaries for the selected point.
+              </p>
+            )}
+          </section>
+          <section className="card">
+            <h3>What we cannot verify</h3>
+            <p>
+              Soil pH: {farm.soil_ph ?? "unknown"}; soil source:{" "}
+              {farm.soil_source.replaceAll("_", " ")}; irrigation:{" "}
+              {farm.irrigation}. These are farmer-supplied details, not verified
+              field measurements.
+            </p>
+            <p>
+              {contextCrop.planning_horizon === "multi_year"
+                ? "A multi-year establishment or replanting model and locally reviewed requirements are also missing."
+                : "The applicable planting schedule, field drainage and water control, and locally reviewed crop requirements are also missing."}
+            </p>
+          </section>
+          <section className="card">
+            <h3>What to do next</h3>
+            <p>
+              {contextCrop.planning_horizon === "multi_year"
+                ? "Confirm the farm's management horizon and consult a local agronomist before comparing land-use options."
+                : "Confirm whether a managed planting schedule applies to this field and review water, drainage, and crop choices with a local extension officer."}
+            </p>
+            <p className="small muted">
+              Filling in this form alone will not unlock a validated rotation
+              score. Scientific review of the method is still required.
+            </p>
+          </section>
+        </div>
+        <div className="actions">
+          <Link className="button alt" to="/climate">
+            Back to climate
+          </Link>
+          <Link className="button" to="/farm">
+            Edit farm or try annual crops
+          </Link>
+        </div>
+        <p className="small muted">
+          For the separate exploratory comparison, choose maize, mung bean, or
+          sweet potato as the current crop in Farm setup.
+        </p>
+      </>
+    );
+  }
   return (
     <>
       <Head
         step="Step 3 / 4"
         title="Build a comparison"
-        subtitle="Choose two or three possible next crops. Your current crop anchors each sequence."
+        subtitle="Choose two or three crops from the exploratory annual catalog. Your current crop anchors each sequence."
       />
       <section className="panel">
         <h2>Candidate crops</h2>
@@ -740,6 +991,19 @@ function ResultsPage({
           <strong>{result.climate.usable_years} years</strong>
         </div>
       </div>
+      <section className="panel" aria-labelledby="comparison-meaning">
+        <h2 id="comparison-meaning">What this comparison means</h2>
+        <p>
+          {result.ranking_status === "insufficient_evidence"
+            ? "The selected sequences can be inspected, but the available evidence does not support an overall ranking. Read each evidence gap below before interpreting a crop comparison."
+            : "The displayed index compares broad historical climate and supplied soil pH against published species ranges. It is an exploratory screen, not a planting recommendation."}
+        </p>
+        <p className="small muted">
+          Farm area, soil texture, and irrigation are context only in this
+          calculation. Local planting windows, drainage, and management still
+          require review.
+        </p>
+      </section>
       <p className="note warn">{result.method_note}</p>
       {result.climate.stale_cache && (
         <p className="note warn">
@@ -909,7 +1173,7 @@ function Content() {
       )}
       <main>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Home catalog={catalog} />} />
           <Route
             path="/farm"
             element={
@@ -929,6 +1193,7 @@ function Content() {
             element={
               <ClimatePage
                 farm={farm}
+                catalog={catalog}
                 climate={climate}
                 setClimate={setClimate}
               />
@@ -940,6 +1205,7 @@ function Content() {
               <PlannerPage
                 farm={farm}
                 catalog={catalog}
+                climate={climate}
                 selected={selected}
                 setSelected={setSelected}
                 priorities={priorities}

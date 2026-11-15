@@ -4,7 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from .catalog import catalog, crops_by_id
+from .catalog import catalog, crops_by_id, regional_context_by_id
 from .climate import ClimateUnavailable, get_climate
 from .models import CatalogResult, ClimateResult, EvaluateRequest, EvaluationResult
 from .rotation import evaluate
@@ -33,7 +33,8 @@ async def validation_error(_: Request, exc: RequestValidationError):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "catalog_version": catalog()["version"]}
+    return {"status": "ok", "catalog_version": catalog()["version"],
+            "regional_context_version": catalog()["regional_context_version"]}
 
 
 @app.get("/api/crops", response_model=CatalogResult)
@@ -52,9 +53,17 @@ async def climate(latitude: float = Query(ge=-90, le=90), longitude: float = Que
 @app.post("/api/rotations/evaluate", response_model=EvaluationResult)
 async def rotations(request: EvaluateRequest):
     known = crops_by_id()
-    unknown = [c for c in request.crop_ids + [request.farm.existing_crop_id] if c not in known]
+    context = regional_context_by_id()
+    requested_ids = request.crop_ids + [request.farm.existing_crop_id]
+    unknown = [c for c in requested_ids if c not in known and c not in context]
     if unknown:
         raise HTTPException(422, detail={"code": "UNKNOWN_CROP", "message": "Select crops from the catalog", "crop_ids": unknown})
+    context_only = [c for c in requested_ids if c in context]
+    if context_only:
+        raise HTTPException(422, detail={"code": "CROP_CONTEXT_ONLY",
+                                         "message": "These Kedah crops have no reviewed seasonal rotation model.",
+                                         "crop_ids": context_only,
+                                         "reasons": {c: context[c]["comparison_reason"] for c in context_only}})
     result = await get_climate(request.farm.latitude, request.farm.longitude, request.start_year, request.end_year)
     comparison = evaluate(request.farm, request.crop_ids, request.priorities, result)
     return {"farm": request.farm.model_dump(), "catalog_version": catalog()["version"],

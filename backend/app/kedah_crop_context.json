@@ -1,0 +1,108 @@
+{
+  "version": "kedah-staple-industrial-context-2026-11-13",
+  "note": "Documented Kedah crop occurrence is regional context, not evidence that a crop suits the hypothetical farm. These entries have no reviewed thresholds or seasonal rotation rules.",
+  "crops": [
+    {
+      "id": "paddy",
+      "name": "Paddy (rice)",
+      "scientific_name": "Oryza sativa",
+      "system": "managed_paddy",
+      "planning_horizon": "seasonal_schedule",
+      "comparison_status": "context_only",
+      "comparison_reason": "The applicable MADA planting schedule, field water control, soil conditions, and rotation rules need local review before a seasonal comparison.",
+      "review_status": "pending_local_scientific_review",
+      "evidence": [
+        {
+          "claim": "Paddy is a major planted crop in Kedah in the Agriculture Census 2024 state summary.",
+          "source_name": "Department of Statistics Malaysia, Agriculture Census 2024 Kedah",
+          "observation_year": 2023,
+          "url": "https://www.dosm.gov.my/uploads/content-downloads/file_20260416173922.pdf"
+        },
+        {
+          "claim": "MADA publishes planting schedules for its managed paddy area; applicability to this example point is unverified.",
+          "source_name": "Muda Agricultural Development Authority, Season 2/2026 schedule announcement",
+          "observation_year": 2026,
+          "url": "https://www.mada.gov.my/?id=228&q=2F02"
+        }
+      ]
+    },
+    {
+      "id": "rubber",
+      "name": "Rubber",
+      "scientific_name": "Hevea brasiliensis",
+      "system": "perennial_crop",
+      "planning_horizon": "multi_year",
+      "comparison_status": "context_only",
+      "comparison_reason": "Rubber is a perennial land-use decision; the two-season rotation model has no reviewed establishment or replanting rules.",
+      "review_status": "pending_local_scientific_review",
+      "evidence": [
+        {
+          "claim": "Rubber is recorded among Kedah's major planted crops.",
+          "source_name": "Department of Statistics Malaysia, Agriculture Census 2024 Kedah",
+          "observation_year": 2023,
+          "url": "https://www.dosm.gov.my/uploads/content-downloads/file_20260416173922.pdf"
+        }
+      ]
+    },
+    {
+      "id": "oil-palm",
+      "name": "Oil palm",
+      "scientific_name": "Elaeis guineensis",
+      "system": "perennial_crop",
+      "planning_horizon": "multi_year",
+      "comparison_status": "context_only",
+      "comparison_reason": "Oil palm is a perennial land-use decision; the two-season rotation model has no reviewed establishment or replanting rules.",
+      "review_status": "pending_local_scientific_review",
+      "evidence": [
+        {
+          "claim": "Oil palm is recorded among Kedah's major planted crops.",
+          "source_name": "Department of Statistics Malaysia, Agriculture Census 2024 Kedah",
+          "observation_year": 2023,
+          "url": "https://www.dosm.gov.my/uploads/content-downloads/file_20260416173922.pdf"
+        }
+      ]
+    },
+    {
+      "id": "coconut",
+      "name": "Coconut",
+      "scientific_name": "Cocos nucifera",
+      "system": "perennial_crop",
+      "planning_horizon": "multi_year",
+      "comparison_status": "context_only",
+      "comparison_reason": "Coconut is a perennial land-use decision; the two-season rotation model has no reviewed establishment or replanting rules.",
+      "review_status": "pending_local_scientific_review",
+      "evidence": [
+        {
+          "claim": "The 2024 industrial-crop statistics record coconut planted area in Kedah.",
+          "source_name": "Malaysia Department of Agriculture, Industrial Crop Statistics 2024",
+          "observation_year": 2024,
+          "url": "https://www.doa.gov.my/doa/resources/aktiviti_sumber/sumber_awam/penerbitan/statistik_tanaman/statistik_tanaman_industri_2024.pdf"
+        }
+      ]
+    },
+    {
+      "id": "coffee-robusta",
+      "name": "Robusta coffee",
+      "scientific_name": "Coffea canephora",
+      "system": "perennial_crop",
+      "planning_horizon": "multi_year",
+      "comparison_status": "context_only",
+      "comparison_reason": "Coffee is a perennial crop; this app has no reviewed farm-specific establishment, management, or replanting model.",
+      "review_status": "pending_local_scientific_review",
+      "evidence": [
+        {
+          "claim": "The 2024 industrial-crop statistics record coffee planted area in Kedah; the table does not identify the variety.",
+          "source_name": "Malaysia Department of Agriculture, Industrial Crop Statistics 2024",
+          "observation_year": 2024,
+          "url": "https://www.doa.gov.my/doa/resources/aktiviti_sumber/sumber_awam/penerbitan/statistik_tanaman/statistik_tanaman_industri_2024.pdf"
+        },
+        {
+          "claim": "The Kedah coffee programme described by Nestlé used Robusta seedlings in its pilot phase.",
+          "source_name": "Nestlé Malaysia, Kedah coffee programme",
+          "observation_year": 2020,
+          "url": "https://www.nestle.com.my/stories/kedah-coffee-beans"
+        }
+      ]
+    }
+  ]
+}

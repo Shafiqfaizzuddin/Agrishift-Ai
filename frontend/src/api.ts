@@ -20,7 +20,30 @@ export type Crop = {
   source_url: string;
   quality_note: string;
 };
-export type Catalog = { version: string; note: string; crops: Crop[] };
+export type RegionalCrop = {
+  id: string;
+  name: string;
+  scientific_name: string;
+  system: "managed_paddy" | "perennial_crop";
+  planning_horizon: "seasonal_schedule" | "multi_year";
+  comparison_status: "context_only";
+  comparison_reason: string;
+  review_status: "pending_local_scientific_review";
+  evidence: {
+    claim: string;
+    source_name: string;
+    observation_year: number;
+    url: string;
+  }[];
+};
+export type Catalog = {
+  version: string;
+  note: string;
+  crops: Crop[];
+  regional_context_version: string;
+  regional_context_note: string;
+  regional_context: RegionalCrop[];
+};
 export type Climate = {
   source: string;
   source_url: string;
@@ -85,7 +108,9 @@ export type Evaluation = {
   advisory_status: string;
   limitations: string[];
 };
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? "" : "http://localhost:8000");
 export async function request<T>(
   path: string,
   options?: RequestInit,
