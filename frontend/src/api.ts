@@ -108,7 +108,9 @@ export type Evaluation = {
   advisory_status: string;
   limitations: string[];
 };
-const BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+const BASE =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? "" : "http://localhost:8000");
 export async function request<T>(
   path: string,
   options?: RequestInit,

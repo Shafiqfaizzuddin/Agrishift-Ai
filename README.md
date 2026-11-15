@@ -24,6 +24,7 @@ backend/tests/  Pytest synthetic fixtures and unit checks
 docs/           Architecture, data sources, methodology, limitations, planning, build status
 .github/        CI and collaboration templates
 render.yaml     Render blueprint for API
+vercel.json     Vercel Services configuration for the frontend and API together
 ```
 
 ## Local development
@@ -55,7 +56,7 @@ npm ci
 npm run dev
 ```
 
-Open `http://localhost:5173`. Copy `backend/.env.example` and `frontend/.env.example` to local `.env` files only if overriding defaults. Do not commit `.env`. The frontend uses `VITE_API_BASE_URL`, defaulting to `http://localhost:8000`. The backend uses `AGRISHIFT_CORS_ORIGINS`, defaulting to both `http://localhost:5173` and `http://127.0.0.1:5173`.
+Open `http://localhost:5173`. Copy `backend/.env.example` and `frontend/.env.example` to local `.env` files only if overriding defaults. Do not commit `.env`. In local development the frontend uses `VITE_API_BASE_URL`, defaulting to `http://localhost:8000`. A production build without that variable calls the same-origin `/api` routes. The backend CORS defaults permit `http://localhost:5173` and `http://127.0.0.1:5173` for local development.
 
 ## Verification
 
@@ -71,9 +72,9 @@ npm run build
 
 Tests use synthetic fixtures and never present them as NASA observations. A live API smoke test with the Kedah example was performed during development; repeat it when the service is running and network access is available.
 
-## Deployment preparation
+## Vercel hosting
 
-No public deployment has been made. For Render, point a new web service at the repository's `render.yaml` (the backend `.python-version` selects Python 3.14), set the production `AGRISHIFT_CORS_ORIGINS` to the exact Vercel origin, and confirm `/api/health`. For Vercel, set project root to `frontend`, use its `vercel.json`, and set `VITE_API_BASE_URL` to the HTTPS Render API URL. Build and API credentials are not embedded in source. Test CORS, traffic controls, and all five routes in a private preview before any authorized public deployment.
+The repository-root `vercel.json` configures a Vite web service and a FastAPI service on the same Vercel origin. Import the **repository root** as one Vercel project; do not select `frontend` as its root for this setup. Leave `VITE_API_BASE_URL` unset on Vercel so browser requests use `/api` on the same origin. The backend `.python-version` selects Python 3.14. See the [step-by-step Vercel guide](docs/deploy_vercel.md) for branch preview setup and verification. The older `frontend/vercel.json` and `render.yaml` remain available for a separate frontend/Render deployment if needed.
 
 ## Evidence, attribution, and status
 

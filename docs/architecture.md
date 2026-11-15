@@ -17,6 +17,8 @@ flowchart LR
 
 Routes: `/` introduction, `/farm` input/map, `/climate` historical charts, `/planner` choices and weights, `/results` criterion-level comparison. A typed fetch client in `frontend/src/api.ts` owns request/response types and structured error mapping. The backend exposes `/api/health`, `/api/crops`, `/api/climate`, and `/api/rotations/evaluate`; `/docs` is generated OpenAPI.
 
-Within the older exploratory catalog, the current crop anchors every two-crop sequence. Candidate crops are possible next crops. The API returns source links, units, missing-data status, criterion flags, evidence gaps, exclusions, and limitations. Nested Pydantic response models define the OpenAPI contract. CORS origins come from `AGRISHIFT_CORS_ORIGINS`; production must use the exact Vercel origin. `VITE_API_BASE_URL` points the client to the API.
+Within the older exploratory catalog, the current crop anchors every two-crop sequence. Candidate crops are possible next crops. The API returns source links, units, missing-data status, criterion flags, evidence gaps, exclusions, and limitations. Nested Pydantic response models define the OpenAPI contract.
+
+The repository-root `vercel.json` defines two Vercel services in one project: `/api/*` reaches FastAPI and all other paths reach the Vite build, with an internal SPA fallback. The production client uses same-origin `/api` requests when `VITE_API_BASE_URL` is unset, so no cross-origin browser call is required. Local development can override the API URL; `AGRISHIFT_CORS_ORIGINS` controls allowed cross-origin calls for separate-host setups. The in-memory NASA cache is per function instance and is not shared or persistent on Vercel.
 
 The repo includes GitHub Actions jobs for frontend lint/tests/build and backend tests. See [methodology](methodology.md) for computation and [limitations](limitations.md) for scientific scope.
