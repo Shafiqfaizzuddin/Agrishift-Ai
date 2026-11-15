@@ -5,6 +5,7 @@ An independent student decision-support prototype for the 2026 NASA Space Apps C
 ## What works
 
 - Five-screen responsive workflow: overview, farm setup, climate analysis, planner, and results.
+- The default paddy path states its evidence-only scope before analysis and ends with a known / unverified / next-step summary. Climate charts include a plain-language description of observed monthly rainfall highs and lows, with a historical-data caveat.
 - Interactive OpenStreetMap location picker with manual coordinate entry.
 - NASA POWER daily point retrieval for historical temperature and precipitation, with unit checks, missing-value handling, retries, and in-memory cache.
 - Monthly rainfall and temperature charts, source period, completeness, and missing-month warnings from actual retrieved data. The API also returns annual rainfall variability.

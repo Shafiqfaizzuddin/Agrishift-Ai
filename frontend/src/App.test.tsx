@@ -58,6 +58,9 @@ it("introduces the evidence-based workflow and example status", async () => {
     screen.getByRole("heading", { name: /explore kedah crop systems/i }),
   ).toBeInTheDocument();
   expect(screen.getByText(/hypothetical farm in Kedah/i)).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: /know what this example can answer/i }),
+  ).toBeInTheDocument();
   expect(screen.getByRole("link", { name: /analyze a farm/i })).toHaveAttribute(
     "href",
     "/farm",
@@ -83,6 +86,13 @@ it("does not offer seasonal scoring for the default paddy example", async () => 
   expect(
     screen.getByText(/no rotation score or farm-specific/i),
   ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: /what we know/i }),
+  ).toBeInTheDocument();
+  expect(
+    screen.getByRole("heading", { name: /what we cannot verify/i }),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/filling in this form alone/i)).toBeInTheDocument();
   expect(
     screen.queryByRole("button", { name: /compare scenarios/i }),
   ).not.toBeInTheDocument();
@@ -183,4 +193,47 @@ it("labels stale climate data and withheld monthly totals", async () => {
   render(<App />);
   expect(await screen.findByText(/stale cached response/i)).toBeInTheDocument();
   expect(screen.getByText(/1 monthly totals withheld/i)).toBeInTheDocument();
+  expect(
+    screen.getByText(/too few complete monthly rainfall records/i),
+  ).toBeInTheDocument();
+});
+
+it("explains observed rainfall highs and lows without implying a forecast", async () => {
+  window.history.pushState({}, "", "/climate");
+  const fixture = {
+    source: "TEST FIXTURE, not NASA observations",
+    source_url: "https://power.larc.nasa.gov/api/temporal/daily/point",
+    parameters: ["T2M", "PRECTOTCORR"],
+    period: { start_year: 2020, end_year: 2021 },
+    units: { T2M: "C", PRECTOTCORR: "mm/day" },
+    retrieved_at: "2026-11-06T00:00:00Z",
+    from_cache: false,
+    monthly: [],
+    monthly_patterns: [
+      { month: 1, years: 2, rainfall_median_mm: 100, temperature_mean_c: 25 },
+      { month: 2, years: 2, rainfall_median_mm: 250, temperature_mean_c: 26 },
+    ],
+    usable_years: 2,
+    annual_rainfall_median_mm: null,
+    temperature_mean_c: 25.5,
+  };
+  vi.stubGlobal(
+    "fetch",
+    vi.fn((url: string) =>
+      Promise.resolve({
+        ok: true,
+        json: async () =>
+          url.includes("/api/climate")
+            ? fixture
+            : { version: "test", note: "fixture", crops: [] },
+      }),
+    ),
+  );
+  render(<App />);
+  expect(
+    await screen.findByText(
+      /highest in Feb \(250 mm\) and lowest in Jan \(100 mm\)/i,
+    ),
+  ).toBeInTheDocument();
+  expect(screen.getByText(/not field measurements/i)).toBeInTheDocument();
 });

@@ -6,6 +6,14 @@
 
 This is a factual checkpoint. The Kedah profile is hypothetical, and a displayed scenario is an exploratory screen, not a validated recommendation.
 
+## User-journey clarity pass (2026-11-15)
+
+- Clarified on the overview and farm pages that the default paddy path provides climate and regional evidence, not a rotation score. Marked area, soil texture, and irrigation as context-only inputs for the current calculation.
+- Added a historical rainfall summary derived from usable monthly NASA POWER patterns, including an explicit no-forecast caveat and a missing-coverage fallback.
+- Added a paddy/perennial evidence summary showing known context, unverified farm/scientific inputs, and a next step. Clarified the exploratory annual result when an overall ranking is withheld.
+- Frontend verification: Vitest **9 passed**, ESLint passed, Prettier check passed, TypeScript/Vite production build passed, and `git diff --check` passed. The build still warns about an approximately 861 kB JavaScript chunk.
+- No backend algorithm, crop threshold, NASA adapter, or deployment was changed. The existing production site remains on the prior deployment until a deliberate release. Scientific review is still required before paddy or perennial recommendations.
+
 ## Vercel hosting preparation (2026-11-15)
 
 - Added repository-root `vercel.json` for Vite and FastAPI services under one origin. Production builds now use same-origin `/api` calls when `VITE_API_BASE_URL` is unset. Added a step-by-step guide in `deploy_vercel.md`.

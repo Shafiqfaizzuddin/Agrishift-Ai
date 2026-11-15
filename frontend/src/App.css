@@ -130,6 +130,39 @@ h2 {
   align-items: center;
   margin: 25px 0 40px;
 }
+.scope-note {
+  background: #f3f7f0;
+  border: 1px solid #cbdcc8;
+  border-left: 5px solid #2d7b54;
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 42px;
+  line-height: 1.6;
+}
+.scope-note h2 {
+  margin: 0 0 8px;
+  font-size: 22px;
+}
+.scope-note p {
+  margin: 8px 0;
+}
+.input-role {
+  background: #f3f7f0;
+  border-radius: 9px;
+  color: #365b45;
+  padding: 12px 14px;
+}
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+.summary-grid .card {
+  line-height: 1.6;
+}
+.summary-grid .card h3 {
+  margin-top: 0;
+}
 .steps,
 .crop-grid {
   display: grid;
@@ -353,7 +386,8 @@ h2 {
     grid-template-columns: 1fr;
   }
   .steps,
-  .crop-grid {
+  .crop-grid,
+  .summary-grid {
     grid-template-columns: 1fr;
   }
   .results {
