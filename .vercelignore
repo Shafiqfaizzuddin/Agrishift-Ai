@@ -1,0 +1,7 @@
+.github/
+docs/
+.pytest_cache/
+backend/.pytest_cache/
+backend/tests/
+frontend/dist/
+frontend/coverage/
