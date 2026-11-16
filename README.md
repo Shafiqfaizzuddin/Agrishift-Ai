@@ -1,5 +1,5 @@
 # AgriShift AI
-
+Live : https://agrishift-ai.vercel.app/
 An independent student decision-support prototype for the 2026 NASA Space Apps Challenge, [Field Shift: Adapting Farms with NASA Data](https://www.spaceappschallenge.org/2026/challenges/field-shift-adapting-farms-with-nasa-data/). It helps farmers and extension workers explore two-crop sequences using historical NASA POWER climate, farmer-provided field information, and published FAO Ecocrop species ranges. It does **not** issue validated agronomic recommendations.
 
 ## What works
